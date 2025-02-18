@@ -1,4 +1,3 @@
-import asyncio
 import time
 from pyrogram import Client, filters
 from pyrogram.types import Message
@@ -66,10 +65,10 @@ async def forward_message():
                         await log_message(log_msg)
                     except FloodWait as e:
                         flood_wait_count += 1
-                        log_msg = f"FloodWait encountered for {chat.title or chat.username or chat.id}. Sleeping for {e.value} seconds."
+                        log_msg = f"FloodWait encountered for {chat.title or chat.username or chat.id}. Sleeping for {e.x} seconds."
                         print(log_msg)
                         await log_message(log_msg)
-                        await asyncio.sleep(e.value)
+                        await asyncio.sleep(e.x)
                         try:
                             await app.forward_messages(chat.id, SOURCE_CHANNEL, MESSAGE_ID_TO_FORWARD)
                             log_msg = f"Forwarded to {chat.title or chat.username or chat.id} after FloodWait"
@@ -160,18 +159,5 @@ async def update_message_id(client: Client, message: Message):
     await log_message(f"MESSAGE_ID_TO_FORWARD updated to {MESSAGE_ID_TO_FORWARD} by user")
 
 
-async def main():
-    try:
-        await app.start()
-        print("Bot started. Remember to fill in your API credentials, source channel, and message ID.")
-        await log_message("Bot started")
-        await forward_message()  # Start forwarding immediately
-    except Exception as e:
-        print(f"An error occurred: {e}")
-        await log_message(f"Critical error: {e}")
-    finally:
-        await app.stop()
-
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    app.run()  # Start the bot using the new 'run' method
