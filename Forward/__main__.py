@@ -1,8 +1,8 @@
 import asyncio
+import time
 from pyrogram import Client, filters
 from pyrogram.types import Message
 from pyrogram.errors import FloodWait
-import time
 from config import API_ID, API_HASH, SESSION_STRING
 
 # Replace with the source channel username or ID (e.g., "my_channel" or -1001234567890)
@@ -25,15 +25,16 @@ INCREASE_STEP = 20
 DECREASE_STEP = 3
 
 # Replace with the user ID of the authorized user who can start/stop the bot
-AUTHORIZED_USER = 6058139652 # Replace with the actual user ID
+AUTHORIZED_USER = 6058139652  # Replace with the actual user ID
 
 # Replace with the channel ID where you want to send logs
-LOG_CHANNEL_ID = -1002275756264 # Replace with your actual channel ID (must start with -100)
+LOG_CHANNEL_ID = -1002275756264  # Replace with your actual channel ID (must start with -100)
 
 app = Client("forward_bot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION_STRING)
 
 forwarding_task = None  # Global variable to hold the forwarding task
-forwarding_active = False # Global variable to show running status
+forwarding_active = False  # Global variable to show running status
+
 
 async def log_message(message: str):
     """Sends a message to the log channel."""
@@ -42,12 +43,13 @@ async def log_message(message: str):
     except Exception as e:
         print(f"Error sending log message: {e}")  # Log to console if logging fails
 
+
 async def forward_message():
     """Forwards the specified message from the source channel to all joined chats,
        dynamically adjusting the base delay based on FloodWait occurrences."""
-    global forwarding_task, forwarding_active
+    global forwarding_task, forwarding_active, MESSAGE_ID_TO_FORWARD
     base_delay = MIN_BASE_DELAY  # Start with the minimum delay
-    while forwarding_active: #loop until stop
+    while forwarding_active:  # loop until stop
         flood_wait_count = 0  # Reset count for each loop
         try:
             dialogs = []
@@ -78,7 +80,11 @@ async def forward_message():
                             print(log_msg)
                             await log_message(log_msg)
                     except Exception as e:
-                        log_msg = f"Error forwarding to {chat.title or chat.username or chat.id}: {e}"
+                        try:
+                            chat_info = chat.title or str(chat.id)
+                        except:
+                            chat_info = str(chat.id)
+                        log_msg = f"Error forwarding to {chat_info}: {e}"
                         print(log_msg)
                         await log_message(log_msg)
 
@@ -96,14 +102,13 @@ async def forward_message():
             print(log_msg)
             await log_message(log_msg)
         else:
-             # Optionally, decrease base_delay if no FloodWaits occur (but not below MIN_BASE_DELAY)
-             if base_delay > MIN_BASE_DELAY:
-                 base_delay -= DECREASE_STEP # Decrease by 3 seconds (was 5)
-                 base_delay = max(base_delay, MIN_BASE_DELAY) #Ensure base delay not fall below minimum base delay
-                 log_msg = f"Decreasing base delay to {base_delay} seconds."
-                 print(log_msg)
-                 await log_message(log_msg)
-
+            # Optionally, decrease base_delay if no FloodWaits occur (but not below MIN_BASE_DELAY)
+            if base_delay > MIN_BASE_DELAY:
+                base_delay -= DECREASE_STEP  # Decrease by 3 seconds (was 5)
+                base_delay = max(base_delay, MIN_BASE_DELAY)  # Ensure base delay not fall below minimum base delay
+                log_msg = f"Decreasing base delay to {base_delay} seconds."
+                print(log_msg)
+                await log_message(log_msg)
 
         log_msg = f"Sleeping for {base_delay} seconds..."
         print(log_msg)
@@ -115,6 +120,7 @@ async def forward_message():
     forwarding_task = None
     forwarding_active = False
 
+
 @app.on_message(filters.command("start") & filters.user(AUTHORIZED_USER))
 async def start_command(client: Client, message: Message):
     """Handles the /start command."""
@@ -123,22 +129,49 @@ async def start_command(client: Client, message: Message):
         forwarding_active = True
         forwarding_task = asyncio.create_task(forward_message())
         await message.reply_text("Forwarding bot started.")
-        await log_message("Forwarding bot started by user.") #log the start command
+        await log_message("Forwarding bot started by user.")  # log the start command
     else:
         await message.reply_text("Forwarding bot is already running.")
+
 
 @app.on_message(filters.command("stop") & filters.user(AUTHORIZED_USER))
 async def stop_command(client: Client, message: Message):
     """Handles the /stop command."""
     global forwarding_task, forwarding_active
     if forwarding_task:
-        forwarding_active = False #stop the loop
+        forwarding_active = False  # stop the loop
         await message.reply_text("Forwarding bot stopped.")
-        await log_message("Forwarding bot stopped by user.") #log the stop command
+        await log_message("Forwarding bot stopped by user.")  # log the stop command
     else:
         await message.reply_text("Forwarding bot is not running.")
 
+
+@app.on_message(filters.command("update_message_id") & filters.user(AUTHORIZED_USER))
+async def update_message_id(client: Client, message: Message):
+    """Handles the /update_message_id command."""
+    global MESSAGE_ID_TO_FORWARD
+    args = message.text.split()
+    if len(args) < 2 or not args[1].isdigit():
+        await message.reply_text("Usage: /update_message_id <message_id>")
+        return
+    new_message_id = int(args[1])
+    MESSAGE_ID_TO_FORWARD = new_message_id
+    await message.reply_text(f"MESSAGE_ID_TO_FORWARD updated to {MESSAGE_ID_TO_FORWARD}")
+    await log_message(f"MESSAGE_ID_TO_FORWARD updated to {MESSAGE_ID_TO_FORWARD} by user")
+
+
+async def main():
+    try:
+        await app.start()
+        print("Bot started. Remember to fill in your API credentials, source channel, and message ID.")
+        await log_message("Bot started")
+        await forward_message()  # Start forwarding immediately
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        await log_message(f"Critical error: {e}")
+    finally:
+        await app.stop()
+
+
 if __name__ == "__main__":
-    print("Bot started. Remember to fill in your API credentials, source channel, and message ID.")
-    app.start()
-    app.idle()
+    asyncio.run(main())
