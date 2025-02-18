@@ -6,10 +6,10 @@ import time
 from config import API_ID, API_HASH, SESSION_STRING
 
 # Replace with the source channel username or ID (e.g., "my_channel" or -1001234567890)
-SOURCE_CHANNEL = "source_channel_username"
+SOURCE_CHANNEL = "adstesting3"
 
 # Replace with the message ID you want to forward. Use 1 if you want to forward the most recent one
-MESSAGE_ID_TO_FORWARD = 1
+MESSAGE_ID_TO_FORWARD = 2
 
 # Minimum delay between main loops (in seconds). Adjust this based on testing.
 MIN_BASE_DELAY = 90  # 1.5 minutes. Use with CAUTION. Start much higher if unsure.
@@ -25,10 +25,10 @@ INCREASE_STEP = 20
 DECREASE_STEP = 3
 
 # Replace with the user ID of the authorized user who can start/stop the bot
-AUTHORIZED_USER = 123456789  # Replace with the actual user ID
+AUTHORIZED_USER = 6058139652 # Replace with the actual user ID
 
 # Replace with the channel ID where you want to send logs
-LOG_CHANNEL_ID = -1001234567890  # Replace with your actual channel ID (must start with -100)
+LOG_CHANNEL_ID = -1002275756264 # Replace with your actual channel ID (must start with -100)
 
 app = Client("forward_bot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION_STRING)
 
