@@ -8,7 +8,7 @@ from config import API_ID, API_HASH, SESSION_STRING
 SOURCE_CHANNEL = "adstesting3"
 
 # Replace with the message ID you want to forward. Use 1 if you want to forward the most recent one
-MESSAGE_ID_TO_FORWARD = 2
+MESSAGE_ID_TO_FORWARD = 367998
 
 # Minimum delay between main loops (in seconds). Adjust this based on testing.
 MIN_BASE_DELAY = 90  # 1.5 minutes. Use with CAUTION. Start much higher if unsure.
