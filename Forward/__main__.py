@@ -6,7 +6,7 @@ from pyrogram.errors import FloodWait
 from config import API_ID, API_HASH, SESSION_STRING
 
 # Replace with the source channel username or ID
-SOURCE_CHANNEL = "-1002486895937"
+SOURCE_CHANNEL = -1002486895937
 # Replace with the message ID you want to forward
 MESSAGE_ID_TO_FORWARD = 367998
 
