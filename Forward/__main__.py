@@ -2,6 +2,7 @@ import asyncio
 import logging
 from pyrogram import Client, filters
 from pyrogram.errors import FloodWait
+from pyrogram.types import ChatType
 from config import API_ID, API_HASH, SESSION_STRING
 
 # Setup logging for debugging
@@ -23,7 +24,6 @@ async def list_chats():
         async for dialog in app.get_dialogs():
             print(f"Chat ID: {dialog.chat.id} | Name: {dialog.chat.title} | Type: {dialog.chat.type}")
 
-
 async def get_groups(client):
     """Fetch all groups and supergroups the bot has joined."""
     groups = []
@@ -32,8 +32,8 @@ async def get_groups(client):
         chat = dialog.chat
         print(f"Checking Chat: {chat.title} | Type: {chat.type} | ID: {chat.id}")
 
-        # Ensure we detect both normal groups and supergroups
-        if chat.type in ["supergroup", "group"]:
+        # ✅ Correct way to filter groups
+        if chat.type in [ChatType.SUPERGROUP, ChatType.GROUP]:
             groups.append(chat.id)
 
     logging.info(f"✅ Found {len(groups)} groups: {groups}")
