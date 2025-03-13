@@ -22,7 +22,9 @@ async def get_groups(client):
     """Fetch all groups and supergroups the bot has joined."""
     groups = []
     
-    async for dialog in client.iter_dialogs():
+    async for dialog in app.get_dialogs():
+        print(f"Chat: {dialog.chat.title} | Type: {dialog.chat.type}")
+    
         if dialog.chat.type in ["supergroup", "group"]:
             groups.append(dialog.chat.id)
     
