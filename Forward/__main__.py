@@ -54,19 +54,21 @@ async def forward_message_to_all_groups(client):
     groups = await get_groups(client)
     
     if not groups:
-        logging.error("❌ No groups found! Is the bot a member of any?")
+        logging.error("❌ No groups found! Check bot permissions.")
         return
 
     for group_id in groups:
         try:
-            await client.forward_messages(group_id, forwarding_message.chat.id, forwarding_message.message_id)
+            # ✅ Correct the message ID attribute
+            await client.forward_messages(group_id, forwarding_message.chat.id, forwarding_message.id)
             logging.info(f"📤 Message forwarded to group {group_id}")
             await asyncio.sleep(2)  # Avoid hitting Telegram's flood limit
         except FloodWait as e:
             logging.warning(f"⏳ Flood wait triggered! Sleeping for {e.value} seconds.")
-            await asyncio.sleep(e.value)  # Handle flood wait
+            await asyncio.sleep(e.value)
         except Exception as e:
             logging.error(f"⚠️ Error forwarding to {group_id}: {e}")
+
 
 async def start_forwarding(client):
     """Continuously forward the message every FORWARD_INTERVAL seconds."""
