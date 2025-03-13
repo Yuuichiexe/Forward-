@@ -4,7 +4,7 @@ from pyrogram import Client, filters
 from pyrogram.errors import FloodWait
 from config import API_ID, API_HASH, SESSION_STRING
 
-# Setup logging to debug issues
+# Setup logging for debugging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
 # Define authorized user ID and interval for forwarding
@@ -22,11 +22,15 @@ async def get_groups(client):
     """Fetch all groups and supergroups the bot has joined."""
     groups = []
     
-    async for dialog in client.get_dialogs():
+    async for dialog in client.iter_dialogs():
         if dialog.chat.type in ["supergroup", "group"]:
             groups.append(dialog.chat.id)
     
     logging.info(f"✅ Found {len(groups)} groups to forward messages to: {groups}")
+    
+    if not groups:
+        logging.error("❌ No groups found! Check if the bot has proper permissions.")
+    
     return groups
 
 async def forward_message_to_all_groups(client):
