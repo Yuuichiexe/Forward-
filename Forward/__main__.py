@@ -10,29 +10,29 @@ FORWARD_INTERVAL = 20  # Time in seconds between each forwarding cycle
 # Initialize the Pyrogram Client
 app = Client("userbot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION_STRING)
 
-# Global variable to control the forwarding loop
+# Global variables
 forwarding_active = False
 forwarding_message = None  # Store the message to be forwarded
 
-async def get_groups():
+async def get_groups(client):
     """Fetch all groups and supergroups the bot has joined."""
     groups = []
-    async for dialog in app.get_dialogs():
+    async for dialog in client.get_dialogs():
         if dialog.chat.type in ["supergroup", "group"]:
             groups.append(dialog.chat.id)
     return groups
 
-async def forward_message_to_all_groups():
+async def forward_message_to_all_groups(client):
     """Forward the stored message to all joined groups."""
     global forwarding_message
     if not forwarding_message:
         return
 
-    groups = await get_groups()
+    groups = await get_groups(client)
     
     for group_id in groups:
         try:
-            await app.forward_messages(group_id, forwarding_message.chat.id, forwarding_message.message_id)
+            await client.forward_messages(group_id, forwarding_message.chat.id, forwarding_message.message_id)
             await asyncio.sleep(1)  # Avoid hitting Telegram's flood limit
         except FloodWait as e:
             print(f"Flood wait: Sleeping for {e.value} seconds.")
@@ -40,13 +40,13 @@ async def forward_message_to_all_groups():
         except Exception as e:
             print(f"Error forwarding to {group_id}: {e}")
 
-async def start_forwarding():
+async def start_forwarding(client):
     """Continuously forward the message every FORWARD_INTERVAL seconds."""
     global forwarding_active
     forwarding_active = True
 
     while forwarding_active:
-        await forward_message_to_all_groups()
+        await forward_message_to_all_groups(client)
         await asyncio.sleep(FORWARD_INTERVAL)  # Wait before the next cycle
 
 @app.on_message(filters.command("forward") & filters.user(AUTHORIZED_USER_ID))
@@ -66,7 +66,7 @@ async def forward_command(client, message):
     forwarding_message = message.reply_to_message
 
     # Start the forwarding loop
-    asyncio.create_task(start_forwarding())
+    asyncio.create_task(start_forwarding(client))
 
     await message.reply("Forwarding started. The message will be forwarded every 20 seconds.")
 
