@@ -1,45 +1,65 @@
-import time
+import asyncio
 from pyrogram import Client, filters
 from pyrogram.errors import FloodWait
 from config import API_ID, API_HASH, SESSION_STRING
-# Define your bot token and the user ID of the authorized user
 
-AUTHORIZED_USER_ID = 6058139652 # Replace with the authorized user's ID
-CHANNEL_ID = "-1002486895937"  # Replace with the channel ID you want to forward messages from
+# Define authorized user ID and interval for forwarding
+AUTHORIZED_USER_ID = 6058139652  # Replace with your Telegram ID
+FORWARD_INTERVAL = 20  # Time in seconds between each forwarding cycle
 
-# Create a Pyrogram Client instance
+# Initialize the Pyrogram Client
 app = Client("userbot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION_STRING)
 
-# Function to forward the message to all joined groups
+# Global variable to control the forwarding loop
+forwarding_active = False
+
+async def get_groups():
+    """Fetch all groups and supergroups the bot has joined."""
+    groups = []
+    async for dialog in app.get_dialogs():
+        if dialog.chat.type in ["supergroup", "group"]:
+            groups.append(dialog.chat.id)
+    return groups
+
 async def forward_message_to_all_groups(message):
-    # Get all the chat IDs of the groups the bot is in
-    async for chat in app.get_chats():
-        if chat.type == "supergroup" or chat.type == "group":
-            try:
-                # Forward the message to each group
-                await app.forward_messages(chat.id, message.chat.id, message.message_id)
-                time.sleep(1)  # To prevent too many requests at once, handle flood wait
-            except FloodWait as e:
-                print(f"Flood wait: Sleeping for {e.x} seconds.")
-                time.sleep(e.x)  # Handle flood wait
-            except Exception as e:
-                print(f"Error forwarding message: {e}")
+    """Forward the message to all joined groups."""
+    groups = await get_groups()
+    
+    for group_id in groups:
+        try:
+            await app.forward_messages(group_id, message.chat.id, message.message_id)
+            await asyncio.sleep(1)  # Avoid hitting Telegram's flood limit
+        except FloodWait as e:
+            print(f"Flood wait: Sleeping for {e.value} seconds.")
+            await asyncio.sleep(e.value)  # Handle flood wait
+        except Exception as e:
+            print(f"Error forwarding to {group_id}: {e}")
 
-# Handler to forward messages from the specific channel to all groups
-@app.on_message(filters.chat(CHANNEL_ID))
-async def forward_channel_message(client, message):
-    # Forward the message to all groups
-    await forward_message_to_all_groups(message)
+async def start_forwarding(client, message):
+    """Continuously forward the message every FORWARD_INTERVAL seconds."""
+    global forwarding_active
+    forwarding_active = True
+    message_id = message.message_id
 
-# Command handler for the userbot (only authorized user can run this)
+    await message.reply("Forwarding started. The message will be forwarded every 20 seconds.")
+
+    while forwarding_active:
+        await forward_message_to_all_groups(message)
+        await asyncio.sleep(FORWARD_INTERVAL)  # Wait before the next cycle
+
 @app.on_message(filters.command("forward") & filters.user(AUTHORIZED_USER_ID))
 async def forward_command(client, message):
-    # Make sure there is a message to forward
+    """Handles the /forward command."""
     if len(message.command) < 2:
-        await message.reply("Please provide the message ID you want to forward.")
+        await message.reply("Please reply to a message or provide a message ID.")
         return
 
-    # Get the target message ID to forward
+    global forwarding_active
+    if forwarding_active:
+        await message.reply("Forwarding is already running. Use /stop to stop it.")
+        return
+
+    # Get the message ID and fetch the message
     try:
         message_id = int(message.command[1])
         target_message = await message.chat.get_message(message_id)
@@ -50,9 +70,19 @@ async def forward_command(client, message):
         await message.reply(f"Error: {e}")
         return
 
-    # Call the function to forward the message to all groups
-    await forward_message_to_all_groups(target_message)
-    await message.reply("Message forwarded to all groups.")
+    # Start the forwarding loop
+    asyncio.create_task(start_forwarding(client, target_message))
+
+@app.on_message(filters.command("stop") & filters.user(AUTHORIZED_USER_ID))
+async def stop_command(client, message):
+    """Handles the /stop command."""
+    global forwarding_active
+    if not forwarding_active:
+        await message.reply("No forwarding process is running.")
+        return
+
+    forwarding_active = False
+    await message.reply("Forwarding stopped.")
 
 # Start the bot
 app.run()
