@@ -18,22 +18,31 @@ app = Client("userbot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION
 forwarding_active = False
 forwarding_message = None  # Store the message to be forwarded
 
+async def list_chats():
+    async with app:
+        async for dialog in app.get_dialogs():
+            print(f"Chat ID: {dialog.chat.id} | Name: {dialog.chat.title} | Type: {dialog.chat.type}")
+
+
 async def get_groups(client):
     """Fetch all groups and supergroups the bot has joined."""
     groups = []
     
-    async for dialog in app.get_dialogs():
-        print(f"Chat: {dialog.chat.title} | Type: {dialog.chat.type}")
-    
-        if dialog.chat.type in ["supergroup", "group"]:
-            groups.append(dialog.chat.id)
-    
-    logging.info(f"✅ Found {len(groups)} groups to forward messages to: {groups}")
+    async for dialog in client.get_dialogs():
+        chat = dialog.chat
+        print(f"Checking Chat: {chat.title} | Type: {chat.type} | ID: {chat.id}")
+
+        # Ensure we detect both normal groups and supergroups
+        if chat.type in ["supergroup", "group"]:
+            groups.append(chat.id)
+
+    logging.info(f"✅ Found {len(groups)} groups: {groups}")
     
     if not groups:
-        logging.error("❌ No groups found! Check if the bot has proper permissions.")
+        logging.error("❌ No groups found! Check bot permissions.")
     
     return groups
+
 
 async def forward_message_to_all_groups(client):
     """Forward the stored message to all joined groups."""
