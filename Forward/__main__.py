@@ -13,7 +13,7 @@ AUTHORIZED_USER_ID = 6058139652  # Replace with your Telegram ID
 FORWARD_INTERVAL = 20  # Time in seconds between each forwarding cycle
 
 # Initialize the Pyrogram Client
-app = Client("userbot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION_STRING)
+app = Client("pbot", api_id=API_ID, api_hash=API_HASH, session_string=SESSION_STRING)
 
 # Global variables
 forwarding_active = False
