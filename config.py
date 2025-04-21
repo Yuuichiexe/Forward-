@@ -2,7 +2,7 @@ import os
 from os import getenv
 
 
-API_ID = int(getenv("API_ID", "26405281"))
-API_HASH = getenv("API_HASH", "77b54622ef8e0fd15555d939fc74005d")
-SESSION_STRING = getenv("SESSION_STRING", "BAE0ksQAN1Uo8ofo1_ZN1D5V6_D8-h2Dj2o8PiF3X67vaeq90Nx9NqPOzq4jAgK4MgT-Dr4jS6gMLDUIzD2ihMnFf-IgCd40RWkfeXu-uTjfT0H9g0Omue7Okqc_ySmGUZiOvPifEnUAZimz9bpm4Ti1NjdU8MdPVjndsy_19WiDqXJrDKo-tpF_E4Uj5erBdhPqeM6pFKXr-H_6UN2TSeo97Kj93TTsbJzrZI9GxezPSP1-AEriXbPT19I8XuRjkSo8LlWATexTJ1CNs4fPHB2cqLTHbFgCs1FvGcmnE6OCi52-n1gEz9rFxQOVztsVncwYc9NmkRmiaw7cX0815RBrhnNBHAAAAAG-9-oTAA")
+API_ID = int(getenv("API_ID", ""))
+API_HASH = getenv("API_HASH", "")
+SESSION_STRING = getenv("SESSION_STRING", "")
 
